@@ -1,0 +1,16 @@
+# dependencias y builds
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+next-env.d.ts
+
+# base de datos local (contiene tus solicitudes reales: no la subas al repo)
+data/*.db
+data/*.db-shm
+data/*.db-wal
+
+# entorno y sistema
+.env*.local
+.DS_Store
+npm-debug.log*
