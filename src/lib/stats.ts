@@ -65,7 +65,8 @@ interface Flags {
 }
 
 const WEEKS_SHOWN = 8;
-const NO_SOURCE = "Sin especificar";
+/** Clave interna del grupo «sin fuente»; la pantalla la traduce según el idioma. */
+export const NO_SOURCE = "__sin_fuente__";
 
 function byDate(a: StatusChange, b: StatusChange): number {
   return a.changedAt === b.changedAt ? a.id - b.id : a.changedAt < b.changedAt ? -1 : 1;
@@ -100,7 +101,13 @@ function groupBy(
   }
   return [...groups.entries()]
     .map(([key, list]) => summarize(key, list, flags))
-    .sort((a, b) => b.total - a.total || a.key.localeCompare(b.key));
+    .sort(
+      (a, b) =>
+        b.total - a.total ||
+        // En los empates, «sin especificar» va al final y el resto por orden alfabético.
+        Number(a.key === NO_SOURCE) - Number(b.key === NO_SOURCE) ||
+        a.key.localeCompare(b.key),
+    );
 }
 
 export function computeStats(apps: Application[], history: StatusChange[], today: string): Stats {

@@ -18,3 +18,58 @@ html {
     transform: translateX(-50%);
   }
 }
+
+/*
+ * Modo oscuro.
+ *
+ * Toda la interfaz usa la escala «slate» de Tailwind (bg-white, text-slate-600, border-slate-200…),
+ * que Tailwind 4 expone como variables CSS. En vez de añadir una variante `dark:` a cada clase,
+ * aquí se invierte la escala cuando <html data-theme="dark">: lo que era claro pasa a oscuro y
+ * viceversa (por ejemplo, el botón principal bg-slate-900 + text-white queda claro con texto oscuro).
+ * Los colores de los avisos y estados (azul, rosa, ámbar…) se sustituyen por versiones oscuras
+ * con el mismo contraste.
+ */
+html {
+  color-scheme: light;
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+
+  --color-white: #1b2536;
+  --color-slate-50: #0f1623;
+  --color-slate-100: #263247;
+  --color-slate-200: #334155;
+  --color-slate-300: #475569;
+  --color-slate-400: #8796ab;
+  --color-slate-500: #9aa8bc;
+  --color-slate-600: #b6c1d1;
+  --color-slate-700: #d0d8e4;
+  --color-slate-800: #e3e8f0;
+  --color-slate-900: #f1f5f9;
+
+  --color-blue-50: #172a4d;
+  --color-blue-200: #2c4a85;
+  --color-blue-700: #8db8ff;
+  --color-cyan-50: #0f3340;
+  --color-cyan-200: #1f5a6e;
+  --color-cyan-800: #7dd8ee;
+  --color-violet-50: #2a2150;
+  --color-violet-200: #4a3d8a;
+  --color-violet-700: #b4a4ff;
+  --color-amber-50: #3a2a0c;
+  --color-amber-200: #6b4d12;
+  --color-amber-800: #f0c46a;
+  --color-amber-900: #f6d58f;
+  --color-emerald-50: #0e3325;
+  --color-emerald-200: #1c5d44;
+  --color-emerald-700: #6fddb0;
+  --color-rose-50: #3d1822;
+  --color-rose-200: #6e2c3c;
+  --color-rose-600: #fb8a9f;
+  --color-rose-700: #ff9db0;
+  --color-zinc-100: #272a31;
+  --color-zinc-300: #454a55;
+  --color-zinc-500: #98a0ad;
+  --color-zinc-600: #b0b7c3;
+}

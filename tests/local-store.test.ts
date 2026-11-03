@@ -112,3 +112,56 @@ describe("Almacén del navegador: persistencia y datos de ejemplo", () => {
     assert.ok(store.getApplication(id));
   });
 });
+
+describe("Almacén del navegador: idioma de los datos de ejemplo", () => {
+  let storage: FakeStorage;
+
+  beforeEach(() => {
+    storage = new FakeStorage();
+    store.__useStorageForTests(storage);
+  });
+
+  it("si los ejemplos están sin tocar, se vuelven a generar en el idioma elegido", () => {
+    assert.ok(store.listApplications().some((app) => app.role === "Desarrollador/a Full Stack")); // arranca en español
+    store.syncSeedLanguage("en");
+    const apps = store.listApplications();
+    assert.equal(apps.length, buildSeed(todayISO(), "en").length);
+    assert.ok(apps.some((app) => app.role === "Full Stack Developer"));
+    assert.ok(!apps.some((app) => app.role.startsWith("Desarrollador")));
+    store.syncSeedLanguage("es");
+    assert.ok(store.listApplications().some((app) => app.role === "Desarrollador/a Full Stack"));
+  });
+
+  it("el idioma elegido se guarda con los datos: tras recargar no se vuelve a traducir sin motivo", () => {
+    store.syncSeedLanguage("en");
+    store.__forgetMemoryForTests();
+    const before = store.getVersion();
+    store.syncSeedLanguage("en"); // ya están en inglés: no hace nada
+    assert.equal(store.getVersion(), before);
+    assert.ok(store.listApplications().some((app) => app.role === "Full Stack Developer"));
+  });
+
+  it("si el usuario ha cambiado algo, sus datos no se tocan al cambiar de idioma", () => {
+    const first = store.listApplications()[0];
+    store.updateApplication(first.id, { ...first, notes: "Mi nota" });
+    store.syncSeedLanguage("en");
+    const apps = store.listApplications();
+    assert.equal(apps.find((app) => app.id === first.id)?.notes, "Mi nota");
+    assert.ok(apps.some((app) => app.role === "Desarrollador/a Full Stack"));
+  });
+
+  it("una demo vaciada sigue vacía al cambiar de idioma", () => {
+    store.deleteAllApplications();
+    store.syncSeedLanguage("en");
+    assert.equal(store.countApplications(), 0);
+  });
+
+  it("«Restablecer» usa el idioma indicado y vuelve a contar como ejemplos sin tocar", () => {
+    const first = store.listApplications()[0];
+    store.updateApplication(first.id, { ...first, notes: "Mi nota" });
+    store.resetDemo("en");
+    assert.ok(store.listApplications().some((app) => app.role === "Full Stack Developer"));
+    store.syncSeedLanguage("es");
+    assert.ok(store.listApplications().some((app) => app.role === "Desarrollador/a Full Stack"));
+  });
+});

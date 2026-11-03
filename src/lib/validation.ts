@@ -7,7 +7,21 @@ import {
 } from "./constants";
 import type { ApplicationInput, ListFilters } from "./types";
 
-export type FormErrors = Record<string, string>;
+/** Un error de campo: un código (la pantalla lo traduce) y, si hace falta, el máximo permitido. */
+export type ErrorCode =
+  | "company_required"
+  | "role_required"
+  | "work_mode_required"
+  | "date_invalid"
+  | "status_invalid"
+  | "url_invalid"
+  | "email_invalid"
+  | "too_long";
+export interface FormError {
+  code: ErrorCode;
+  max?: number;
+}
+export type FormErrors = Record<string, FormError>;
 export type FormValues = Record<string, string>;
 
 /** Estado que devuelven las acciones de formulario: errores por campo + lo que escribió el usuario. */
@@ -96,21 +110,21 @@ export function parseApplicationForm(form: FormLike): ParseResult<ApplicationInp
   for (const name of FIELD_NAMES) values[name] = text(form, name);
 
   const errors: FormErrors = {};
-  if (!values.company) errors.company = "Indica la empresa.";
-  if (!values.role) errors.role = "Indica el rol o puesto.";
-  if (!isWorkMode(values.workMode)) errors.workMode = "Elige la modalidad de trabajo.";
-  if (!isValidISODate(values.appliedAt)) errors.appliedAt = "Indica una fecha válida.";
+  if (!values.company) errors.company = { code: "company_required" };
+  if (!values.role) errors.role = { code: "role_required" };
+  if (!isWorkMode(values.workMode)) errors.workMode = { code: "work_mode_required" };
+  if (!isValidISODate(values.appliedAt)) errors.appliedAt = { code: "date_invalid" };
 
   const status = values.status === "" ? "enviada" : values.status;
-  if (!isStatus(status)) errors.status = "Estado no válido.";
+  if (!isStatus(status)) errors.status = { code: "status_invalid" };
 
-  if (values.url && !isHttpUrl(values.url)) errors.url = "Debe ser un enlace que empiece por http:// o https://";
-  if (values.contactEmail && !EMAIL_RE.test(values.contactEmail)) errors.contactEmail = "Email no válido.";
+  if (values.url && !isHttpUrl(values.url)) errors.url = { code: "url_invalid" };
+  if (values.contactEmail && !EMAIL_RE.test(values.contactEmail)) errors.contactEmail = { code: "email_invalid" };
   if (values.nextActionDate && !isValidISODate(values.nextActionDate)) {
-    errors.nextActionDate = "Indica una fecha válida.";
+    errors.nextActionDate = { code: "date_invalid" };
   }
   for (const [name, max] of Object.entries(MAX_LENGTH)) {
-    if (!errors[name] && values[name].length > max) errors[name] = `Máximo ${max} caracteres.`;
+    if (!errors[name] && values[name].length > max) errors[name] = { code: "too_long", max };
   }
 
   if (Object.keys(errors).length > 0) return { ok: false, errors, values };

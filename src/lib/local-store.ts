@@ -5,6 +5,7 @@
  *
  * Solo debe usarse desde el navegador (componentes cliente).
  */
+import { isLang, type Lang } from "../i18n/lang";
 import type { Status } from "./constants";
 import { todayISO } from "./dates";
 import type { Repository } from "./repository";
@@ -26,6 +27,11 @@ export interface StorageLike {
 }
 
 interface State {
+  /**
+   * Idioma de los datos de ejemplo, mientras estén sin tocar. Cualquier cambio del usuario lo borra:
+   * así, al cambiar de idioma solo se vuelven a generar los ejemplos que nadie ha modificado.
+   */
+  seedLang?: Lang;
   apps: Application[];
   history: StatusChange[];
   nextAppId: number;
@@ -79,9 +85,16 @@ function applyStatusChange(s: State, id: number, status: Status, date: string, n
   return true;
 }
 
-function seededState(): State {
+/** Idioma de la página (<html lang>): con él se eligen los ejemplos en español o inglés. */
+function pageLang(): Lang {
+  if (typeof document === "undefined") return "es";
+  return isLang(document.documentElement.lang) ? document.documentElement.lang : "es";
+}
+
+function seededState(lang: Lang): State {
   const s = emptyState();
-  for (const item of buildSeed(todayISO())) {
+  s.seedLang = lang;
+  for (const item of buildSeed(todayISO(), lang)) {
     const id = insertApplication(s, item.input);
     for (const change of item.changes) applyStatusChange(s, id, change.status, change.date, change.note);
   }
@@ -124,13 +137,15 @@ function ensureLoaded(): State {
   if (loaded) {
     state = loaded;
   } else {
-    state = seededState();
+    state = seededState(pageLang());
     persist();
   }
   return state;
 }
 
-function commit(): void {
+/** Guarda y avisa a las pantallas. Salvo que `keepSeed`, el cambio cuenta como «datos modificados por el usuario». */
+function commit(keepSeed = false): void {
+  if (state && !keepSeed) delete state.seedLang;
   persist();
   version += 1;
   for (const listener of listeners) listener();
@@ -260,9 +275,20 @@ export function deleteAllApplications(): void {
 }
 
 /** Vuelve a los datos de ejemplo iniciales (botón «Restablecer» del banner de la demo). */
-export function resetDemo(): void {
-  state = seededState();
-  commit();
+export function resetDemo(lang: Lang = pageLang()): void {
+  state = seededState(lang);
+  commit(true);
+}
+
+/**
+ * Al cambiar de idioma: si los datos siguen siendo los de ejemplo sin tocar, se vuelven a generar
+ * en ese idioma (puestos, fuentes, notas…). Si el usuario ya ha cambiado algo, no se toca nada.
+ */
+export function syncSeedLanguage(lang: Lang): void {
+  const s = ensureLoaded();
+  if (s.seedLang === undefined || s.seedLang === lang) return;
+  state = seededState(lang);
+  commit(true);
 }
 
 // --- Solo para pruebas -------------------------------------------------------------------

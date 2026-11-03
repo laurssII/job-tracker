@@ -4,14 +4,15 @@
  * Pantallas del modo demo. Hacen lo mismo que las páginas del servidor, pero leen y escriben
  * en el almacén del navegador (src/lib/local-store.ts) y reutilizan las mismas vistas.
  */
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useMemo, useSyncExternalStore } from "react";
-import { ApplicationForm } from "@/components/ApplicationForm";
-import { KanbanBoard } from "@/components/KanbanBoard";
+import { useCallback, useEffect, useMemo, useSyncExternalStore } from "react";
+import { ApplicationForm, FormHeading } from "@/components/ApplicationForm";
+import { BoardHeading, KanbanBoard } from "@/components/KanbanBoard";
+import { NotFoundMessage } from "@/components/NotFoundMessage";
 import { ApplicationDetailView } from "@/components/views/ApplicationDetailView";
-import { ApplicationsListView, exportLabel } from "@/components/views/ApplicationsListView";
+import { ApplicationsListView } from "@/components/views/ApplicationsListView";
 import { DashboardView } from "@/components/views/DashboardView";
+import { useLang } from "@/i18n/LanguageProvider";
 import { todayISO } from "@/lib/dates";
 import { downloadCsv } from "@/lib/download";
 import { applicationToValues, newApplicationValues } from "@/lib/form-values";
@@ -34,39 +35,29 @@ function useDemoVersion(): number | null {
 }
 
 function Loading() {
-  return <p className="py-16 text-center text-sm text-slate-500">Cargando datos de ejemplo…</p>;
-}
-
-function NotFoundMessage() {
-  return (
-    <div className="py-16 text-center">
-      <h1 className="text-2xl font-semibold">No encontrado</h1>
-      <p className="mt-2 text-slate-600">Esta solicitud no existe o se ha eliminado.</p>
-      <Link href="/applications" className="mt-6 inline-block text-sm font-medium text-blue-700 hover:underline">
-        Volver a las solicitudes
-      </Link>
-    </div>
-  );
+  const { t } = useLang();
+  return <p className="py-16 text-center text-sm text-slate-500">{t.demo.loading}</p>;
 }
 
 /** Barra superior de la demo. Solo lleva «Restablecer datos»; «Vaciar demo» está en el pie. */
 export function DemoBanner() {
   const router = useRouter();
+  const { lang, t } = useLang();
   return (
     <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
-      <strong>Demo.</strong> Los datos son ficticios y se guardan solo en este navegador.{" "}
+      <strong>{t.demo.bannerTitle}</strong> {t.demo.bannerText}{" "}
       <button
         type="button"
         onClick={() => {
-          if (window.confirm("¿Restablecer los datos de ejemplo? Se perderán los cambios que hayas hecho en la demo.")) {
-            store.resetDemo();
-            showNotice("Datos de ejemplo restablecidos.");
+          if (window.confirm(t.demo.resetConfirm)) {
+            store.resetDemo(lang);
+            showNotice(t.demo.resetDone);
             router.push("/");
           }
         }}
         className="font-medium underline hover:no-underline"
       >
-        Restablecer datos
+        {t.demo.reset}
       </button>
     </div>
   );
@@ -89,26 +80,29 @@ function DemoNotice() {
 /** Pie de página de la demo: aquí vive «Vaciar demo», fuera de la barra superior para no sobrecargarla. */
 export function DemoFooter() {
   const router = useRouter();
+  const { lang, t } = useLang();
+
+  // Si los ejemplos siguen sin tocar, se muestran en el idioma elegido (también al cargar la página).
+  useEffect(() => {
+    store.syncSeedLanguage(lang);
+  }, [lang]);
+
   return (
     <>
       <footer className="border-t border-slate-200 px-4 py-6 text-center text-xs text-slate-500">
-        ¿Quieres probarla desde cero?{" "}
+        {t.demo.footerPrompt}{" "}
         <button
           type="button"
           onClick={() => {
-            if (
-              window.confirm(
-                "¿Vaciar la demo? Se eliminarán todas las solicitudes, incluidas las de ejemplo. Podrás recuperarlas con «Restablecer datos».",
-              )
-            ) {
+            if (window.confirm(t.demo.clearConfirm)) {
               store.deleteAllApplications();
-              showNotice("Demo vaciada. Añade tu primera solicitud.");
+              showNotice(t.demo.clearDone);
               router.push("/");
             }
           }}
           className="font-medium text-slate-700 underline hover:no-underline"
         >
-          Vaciar demo
+          {t.demo.clear}
         </button>
       </footer>
       <DemoNotice />
@@ -128,6 +122,7 @@ export function DemoDashboard() {
 }
 
 export function DemoApplications({ filters }: { filters: ListFilters }) {
+  const { lang } = useLang();
   const version = useDemoVersion();
   const filtersKey = JSON.stringify(filters);
   const data = useMemo(
@@ -144,15 +139,7 @@ export function DemoApplications({ filters }: { filters: ListFilters }) {
       applications={data.applications}
       sources={data.sources}
       filters={filters}
-      exportControl={
-        <button
-          type="button"
-          onClick={() => downloadCsv(data.applications)}
-          className="text-sm text-slate-600 hover:text-slate-900"
-        >
-          {exportLabel(filters)}
-        </button>
-      }
+      onExport={() => downloadCsv(data.applications, lang)}
     />
   );
 }
@@ -164,7 +151,7 @@ export function DemoBoard() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Tablero</h1>
+      <BoardHeading />
       <KanbanBoard
         applications={applications}
         onMove={async (id, status) => ({ ok: store.changeStatus(id, status, todayISO(), null) })}
@@ -215,7 +202,7 @@ export function DemoNew() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">Nueva solicitud</h1>
+      <FormHeading mode="create" />
       <ApplicationForm
         mode="create"
         action={action}
@@ -249,9 +236,7 @@ export function DemoEdit({ id }: { id: number }) {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">
-        Editar: {application.company} <span className="font-normal text-slate-500">· {application.role}</span>
-      </h1>
+      <FormHeading mode="edit" company={application.company} role={application.role} />
       <ApplicationForm
         mode="edit"
         action={action}

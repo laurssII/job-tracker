@@ -1,7 +1,10 @@
+"use client";
+
 import Link from "next/link";
-import { FOLLOW_UP_DAYS, STATUS_LABELS, WORK_MODE_LABELS, isWorkMode } from "@/lib/constants";
+import { useLang } from "@/i18n/LanguageProvider";
+import { FOLLOW_UP_DAYS, isWorkMode } from "@/lib/constants";
 import { formatPercent, formatShortDate } from "@/lib/format";
-import type { FollowUp, GroupStat, WeekCount } from "@/lib/stats";
+import { NO_SOURCE, type FollowUp, type GroupStat, type WeekCount } from "@/lib/stats";
 
 export function Stat({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -45,27 +48,30 @@ export function BarList({ items }: { items: { label: string; value: number }[] }
 
 /** Tabla de rendimiento por fuente o modalidad. */
 export function GroupTable({ title, groups }: { title: string; groups: GroupStat[] }) {
+  const { lang, t } = useLang();
   if (groups.every((group) => group.total === 0)) {
-    return <p className="text-sm text-slate-500">Todavía no hay datos.</p>;
+    return <p className="text-sm text-slate-500">{t.dashboard.noData}</p>;
   }
   return (
     <table className="w-full text-sm">
       <thead>
         <tr className="text-left text-xs uppercase tracking-wide text-slate-500">
           <th className="pb-2 font-medium">{title}</th>
-          <th className="pb-2 text-right font-medium">Enviadas</th>
-          <th className="pb-2 text-right font-medium">Respuestas</th>
-          <th className="pb-2 text-right font-medium">Entrevistas</th>
+          <th className="pb-2 text-right font-medium">{t.dashboard.colSent}</th>
+          <th className="pb-2 text-right font-medium">{t.dashboard.colReplies}</th>
+          <th className="pb-2 text-right font-medium">{t.dashboard.colInterviews}</th>
         </tr>
       </thead>
       <tbody className="divide-y divide-slate-100">
         {groups.map((group) => (
           <tr key={group.key}>
-            <td className="py-1.5">{isWorkMode(group.key) ? WORK_MODE_LABELS[group.key] : group.key}</td>
+            <td className="py-1.5">
+              {isWorkMode(group.key) ? t.workModes[group.key] : group.key === NO_SOURCE ? t.dashboard.noSource : group.key}
+            </td>
             <td className="py-1.5 text-right tabular-nums">{group.total}</td>
             <td className="py-1.5 text-right tabular-nums">
               {group.responded}{" "}
-              <span className="text-xs text-slate-400">({group.total ? formatPercent(group.responseRate) : "—"})</span>
+              <span className="text-xs text-slate-500">({group.total ? formatPercent(group.responseRate, lang) : "—"})</span>
             </td>
             <td className="py-1.5 text-right tabular-nums">{group.interviews}</td>
           </tr>
@@ -77,6 +83,7 @@ export function GroupTable({ title, groups }: { title: string; groups: GroupStat
 
 /** Columnas verticales: solicitudes enviadas por semana. */
 export function WeeklyChart({ weeks }: { weeks: WeekCount[] }) {
+  const { lang } = useLang();
   const max = Math.max(1, ...weeks.map((week) => week.count));
   return (
     // Las columnas ocupan todo el alto (sin items-end): así el alto en % de cada barra tiene una referencia.
@@ -90,7 +97,7 @@ export function WeeklyChart({ weeks }: { weeks: WeekCount[] }) {
               style={{ height: `${(week.count / max) * 100}%`, minHeight: week.count > 0 ? 4 : 0 }}
             />
           </div>
-          <span className="text-[10px] text-slate-500">{formatShortDate(week.weekStart)}</span>
+          <span className="text-[10px] text-slate-500">{formatShortDate(week.weekStart, lang)}</span>
         </div>
       ))}
     </div>
@@ -98,8 +105,9 @@ export function WeeklyChart({ weeks }: { weeks: WeekCount[] }) {
 }
 
 export function FollowUpList({ items }: { items: FollowUp[] }) {
+  const { t } = useLang();
   if (items.length === 0) {
-    return <p className="text-sm text-slate-500">Nada pendiente por ahora. ¡Al día!</p>;
+    return <p className="text-sm text-slate-500">{t.dashboard.nothingPending}</p>;
   }
   return (
     <ul className="divide-y divide-slate-100">
@@ -112,10 +120,10 @@ export function FollowUpList({ items }: { items: FollowUp[] }) {
             <span className="text-slate-500"> · {application.role}</span>
             <p className="truncate text-xs text-slate-500">
               {kind === "action"
-                ? `${application.nextAction ?? "Próxima acción"} — ${
-                    days === 0 ? "es hoy" : `vencida hace ${days} ${days === 1 ? "día" : "días"}`
+                ? `${application.nextAction ?? t.dashboard.nextActionFallback} — ${
+                    days === 0 ? t.dashboard.dueToday : t.dashboard.overdue(days)
                   }`
-                : `${STATUS_LABELS[application.status]} hace ${days} días (sin respuesta tras ${FOLLOW_UP_DAYS}+ días)`}
+                : t.dashboard.stale(t.statuses[application.status], days, FOLLOW_UP_DAYS)}
             </p>
           </div>
           <span
@@ -123,7 +131,7 @@ export function FollowUpList({ items }: { items: FollowUp[] }) {
               kind === "action" ? "bg-amber-50 text-amber-800" : "bg-slate-100 text-slate-600"
             }`}
           >
-            {kind === "action" ? "Acción" : "Seguimiento"}
+            {kind === "action" ? t.dashboard.badgeAction : t.dashboard.badgeFollowUp}
           </span>
         </li>
       ))}

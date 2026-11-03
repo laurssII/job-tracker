@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useEffect, useState, useTransition } from "react";
-import { STATUSES, STATUS_LABELS, WORK_MODE_LABELS, isStatus, type Status } from "@/lib/constants";
+import { useLang } from "@/i18n/LanguageProvider";
+import { STATUSES, isStatus, type Status } from "@/lib/constants";
 import { formatDate, formatShortDate } from "@/lib/format";
 import type { Application } from "@/lib/types";
 
@@ -10,6 +11,12 @@ interface Props {
   applications: Application[];
   /** Guarda el cambio de estado: acción del servidor (modo normal) o almacén del navegador (demo). */
   onMove: (id: number, status: Status) => Promise<{ ok: boolean }>;
+}
+
+/** Título de la página del tablero. */
+export function BoardHeading() {
+  const { t } = useLang();
+  return <h1 className="text-2xl font-semibold tracking-tight">{t.board.title}</h1>;
 }
 
 /**
@@ -22,6 +29,7 @@ interface Props {
  *   tarjeta como alternativa al arrastre.
  */
 export function KanbanBoard({ applications, onMove }: Props) {
+  const { lang, t } = useLang();
   const [items, setItems] = useState(applications);
   const [draggingId, setDraggingId] = useState<number | null>(null);
   const [overColumn, setOverColumn] = useState<Status | null>(null);
@@ -56,7 +64,7 @@ export function KanbanBoard({ applications, onMove }: Props) {
     <div className="board-wide">
       {failed && (
         <p className="mb-3 rounded-md border border-rose-200 bg-rose-50 px-3 py-2 text-sm text-rose-700">
-          No se pudo mover la solicitud. Inténtalo de nuevo.
+          {t.board.moveFailed}
         </p>
       )}
       <div className="flex gap-3 overflow-x-auto pb-4 xl:grid xl:grid-cols-9 xl:gap-2 xl:overflow-visible xl:pb-0">
@@ -80,7 +88,7 @@ export function KanbanBoard({ applications, onMove }: Props) {
               }`}
             >
               <h2 className="flex items-start justify-between gap-1 px-1 py-1 text-xs font-semibold uppercase leading-tight tracking-wide text-slate-600 xl:min-h-9 xl:text-[11px]">
-                <span>{STATUS_LABELS[status]}</span>
+                <span>{t.statuses[status]}</span>
                 <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-xs font-medium text-slate-500 xl:px-1.5 xl:text-[11px]">
                   {column.length}
                 </span>
@@ -88,7 +96,7 @@ export function KanbanBoard({ applications, onMove }: Props) {
               {/* En pantallas anchas la lista ocupa como mucho el alto libre de la ventana y se desplaza sola. */}
               <div className="mt-2 flex-1 space-y-2 xl:mt-1 xl:max-h-[calc(100vh-17rem)] xl:min-h-24 xl:space-y-1.5 xl:overflow-y-auto xl:[scrollbar-width:thin]">
                 {column.length === 0 && (
-                  <p className="px-1 py-3 text-xs text-slate-400 xl:py-2 xl:text-[11px]">Sin solicitudes</p>
+                  <p className="px-1 py-3 text-xs text-slate-600 xl:py-2 xl:text-[11px]">{t.board.empty}</p>
                 )}
                 {column.map((item) => (
                   <article
@@ -114,16 +122,16 @@ export function KanbanBoard({ applications, onMove }: Props) {
                     <p className="mt-0.5 truncate text-xs text-slate-600 xl:text-[11px]">{item.role}</p>
                     {/* El formato de fecha puede variar entre servidor y navegador. */}
                     <p
-                      className="mt-2 flex items-baseline justify-between gap-1 text-xs text-slate-400 xl:mt-1.5 xl:text-[11px]"
+                      className="mt-2 flex items-baseline justify-between gap-1 text-xs text-slate-500 xl:mt-1.5 xl:text-[11px]"
                       suppressHydrationWarning
                     >
-                      <span className="truncate">{WORK_MODE_LABELS[item.workMode]}</span>
-                      <span className="shrink-0 xl:hidden">{formatDate(item.appliedAt)}</span>
-                      <span className="hidden shrink-0 xl:inline">{formatShortDate(item.appliedAt)}</span>
+                      <span className="truncate">{t.workModes[item.workMode]}</span>
+                      <span className="shrink-0 xl:hidden">{formatDate(item.appliedAt, lang)}</span>
+                      <span className="hidden shrink-0 xl:inline">{formatShortDate(item.appliedAt, lang)}</span>
                     </p>
                     {/* Alternativa al arrastre (móvil y teclado). En pantallas anchas solo aparece al enfocarla con el teclado. */}
                     <select
-                      aria-label={`Mover ${item.company} a otro estado`}
+                      aria-label={t.board.moveAria(item.company)}
                       value={item.status}
                       onChange={(event) => {
                         if (isStatus(event.target.value)) move(item.id, event.target.value);
@@ -132,7 +140,7 @@ export function KanbanBoard({ applications, onMove }: Props) {
                     >
                       {STATUSES.map((option) => (
                         <option key={option} value={option}>
-                          {STATUS_LABELS[option]}
+                          {t.statuses[option]}
                         </option>
                       ))}
                     </select>
@@ -144,8 +152,7 @@ export function KanbanBoard({ applications, onMove }: Props) {
         })}
       </div>
       <p className="mt-3 text-xs text-slate-500">
-        Arrastra las tarjetas entre columnas; en pantallas pequeñas, usa el selector de cada tarjeta. Cada movimiento
-        queda en el historial con la fecha de hoy.
+        {t.board.hint}
       </p>
     </div>
   );

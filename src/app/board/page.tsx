@@ -1,6 +1,6 @@
 import { moveApplicationAction } from "@/app/actions";
 import { DemoBoard } from "@/components/demo/DemoPages";
-import { KanbanBoard } from "@/components/KanbanBoard";
+import { BoardHeading, KanbanBoard } from "@/components/KanbanBoard";
 import { listApplications } from "@/lib/applications";
 import { IS_DEMO } from "@/lib/mode";
 
@@ -11,7 +11,7 @@ export default function BoardPage() {
 
   return (
     <div className="space-y-4">
-      <h1 className="text-2xl font-semibold tracking-tight">Tablero</h1>
+      <BoardHeading />
       <KanbanBoard applications={listApplications()} onMove={moveApplicationAction} />
     </div>
   );

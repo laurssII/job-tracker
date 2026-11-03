@@ -3,6 +3,7 @@
  *
  *   npm run seed                      -> solo si la base de datos está vacía
  *   npm run seed -- --reset           -> BORRA todo lo que haya y vuelve a cargar los ejemplos
+ *   npm run seed -- --lang=en        -> ejemplos en inglés (por defecto, español)
  *   DATABASE_PATH=data/demo.db npm run seed   -> usa un fichero aparte (p. ej. para la demo)
  */
 import {
@@ -16,6 +17,7 @@ import { getDbPath } from "../src/lib/db";
 import { buildSeed } from "../src/lib/seed-data";
 
 const reset = process.argv.includes("--reset");
+const lang = process.argv.includes("--lang=en") ? "en" : "es";
 const existing = countApplications();
 
 if (existing > 0 && !reset) {
@@ -28,7 +30,7 @@ if (existing > 0 && !reset) {
 
 if (reset) deleteAllApplications();
 
-const items = buildSeed(todayISO());
+const items = buildSeed(todayISO(), lang);
 for (const item of items) {
   const id = createApplication(item.input);
   for (const change of item.changes) {

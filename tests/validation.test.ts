@@ -60,6 +60,11 @@ test("formulario: devuelve un error por cada campo incorrecto y conserva lo escr
     "workMode",
   ]);
   assert.equal(result.values.role, "Dev");
+  // Los errores son códigos: la pantalla los traduce al idioma elegido.
+  assert.deepEqual(result.errors.company, { code: "company_required" });
+  assert.deepEqual(result.errors.workMode, { code: "work_mode_required" });
+  assert.deepEqual(result.errors.notes, { code: "too_long", max: 5000 });
+  assert.deepEqual(result.errors.url, { code: "url_invalid" });
 });
 
 test("formulario: rechaza enlaces javascript:", () => {

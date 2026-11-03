@@ -4,6 +4,7 @@
  * panel siempre se ve actual.
  */
 import type { Status, WorkMode } from "./constants";
+import type { Lang } from "../i18n/lang";
 import { addDays } from "./dates";
 import type { ApplicationInput } from "./types";
 
@@ -171,6 +172,71 @@ const SPECS: Spec[] = [
   },
 ];
 
+/**
+ * Traducción al inglés de los textos de los ejemplos (los nombres de empresas y personas no cambian).
+ * Lo que no esté aquí se deja tal cual.
+ */
+const EN: Record<string, string> = {
+  // Roles
+  "Desarrollador/a Full Stack": "Full Stack Developer",
+  "Desarrollador/a Python": "Python Developer",
+  "Desarrollador/a Java": "Java Developer",
+  "Ingeniero/a de Datos": "Data Engineer",
+  "Analista de Datos Junior": "Junior Data Analyst",
+  // Ubicación, contrato, fuente, salario, CV
+  "Remoto (España)": "Remote (Spain)",
+  Indefinido: "Permanent",
+  Temporal: "Temporary",
+  Prácticas: "Internship",
+  "Web de la empresa": "Company website",
+  Referido: "Referral",
+  "A convenir": "Negotiable",
+  "1.000 €/mes": "€1,000/month",
+  "CV Full Stack v3": "Full Stack CV v3",
+  "CV Frontend v2": "Frontend CV v2",
+  "CV Backend v1": "Backend CV v1",
+  "CV DevOps v1": "DevOps CV v1",
+  "CV Datos v1": "Data CV v1",
+  // Notas y acciones
+  "Buen equipo y producto interesante. Pedir más detalle sobre el plan de formación.":
+    "Good team and an interesting product. Ask for more detail about the training plan.",
+  "Me recomendó un excompañero. Stack: Python, Airflow y dbt.":
+    "Recommended by a former colleague. Stack: Python, Airflow and dbt.",
+  "Oferta guardada para enviar con una carta de presentación adaptada.":
+    "Job saved to send with a tailored cover letter.",
+  "Responder a la oferta": "Reply to the offer",
+  "Preparar la entrevista final: repasar Airflow": "Prepare for the final interview: review Airflow",
+  "Enviar email de seguimiento": "Send a follow-up email",
+  "Enviar el CV antes de que cierren la oferta": "Send the CV before the job posting closes",
+  // Notas del historial
+  "Entrevista con RRHH": "Interview with HR",
+  "Reto de 3 horas con React y Node": "3-hour challenge with React and Node",
+  "Han elegido un perfil con más experiencia": "They chose a more experienced profile",
+  "Entrevista técnica": "Technical interview",
+  "Oferta: 39k € + seguro médico": "Offer: €39k + health insurance",
+  "Sin noticias tras el mensaje de seguimiento": "No news after the follow-up message",
+  "Rechazo automático por email": "Automatic rejection by email",
+  "Prueba de Terraform y CI/CD": "Terraform and CI/CD test",
+  "Piden más experiencia con Kubernetes": "They want more Kubernetes experience",
+  "Ejercicio de modelado de datos": "Data modelling exercise",
+  "Entrevista final con el equipo": "Final interview with the team",
+  "Llamada de 45 min con la CTO": "45-minute call with the CTO",
+  "Buscaban más experiencia en apps nativas": "They wanted more native app experience",
+  "Entrevista técnica sobre APIs y bases de datos": "Technical interview about APIs and databases",
+  "Piden disponibilidad para una llamada": "They ask for availability for a call",
+  "Entrevista con el responsable de datos": "Interview with the head of data",
+};
+
+/** Traduce un texto de ejemplo; los salarios «32-38k €» pasan a «€32-38k». */
+function translate(text: string, lang: Lang): string;
+function translate(text: string | null, lang: Lang): string | null;
+function translate(text: string | null, lang: Lang): string | null {
+  if (text === null || lang === "es") return text;
+  const salary = /^(\d+-\d+)k €$/.exec(text);
+  if (salary) return `€${salary[1]}k`;
+  return EN[text] ?? text;
+}
+
 function slug(text: string): string {
   return text
     .toLowerCase()
@@ -184,31 +250,32 @@ function emailFor(name: string, company: string): string {
   return `${slug(name).replace(/-/g, ".")}@${slug(company)}.example.com`;
 }
 
-export function buildSeed(today: string): SeedItem[] {
+export function buildSeed(today: string, lang: Lang = "es"): SeedItem[] {
+  const tx = (text: string | null | undefined): string | null => translate(text ?? null, lang);
   return SPECS.map((spec) => {
     const appliedAt = addDays(today, -spec.daysAgo);
     const input: ApplicationInput = {
       company: spec.company,
-      role: spec.role,
-      url: `https://example.com/empleo/${slug(spec.company)}/${slug(spec.role)}`,
-      location: spec.location,
+      role: translate(spec.role, lang),
+      url: `https://example.com/${lang === "es" ? "empleo" : "jobs"}/${slug(spec.company)}/${slug(spec.role)}`,
+      location: translate(spec.location, lang),
       workMode: spec.workMode,
-      contractType: spec.contractType,
-      salary: spec.salary,
-      source: spec.source,
+      contractType: translate(spec.contractType, lang),
+      salary: tx(spec.salary),
+      source: translate(spec.source, lang),
       appliedAt,
       status: spec.pending ? "pendiente" : "enviada",
       contactName: spec.contact ?? null,
       contactEmail: spec.contact ? emailFor(spec.contact, spec.company) : null,
-      cvVersion: spec.cv,
-      notes: spec.notes ?? null,
-      nextAction: spec.nextAction?.[0] ?? null,
+      cvVersion: translate(spec.cv, lang),
+      notes: tx(spec.notes),
+      nextAction: tx(spec.nextAction?.[0]),
       nextActionDate: spec.nextAction ? addDays(today, spec.nextAction[1]) : null,
     };
     const changes = (spec.path ?? []).map(([status, daysAfter, note]) => ({
       status,
       date: addDays(appliedAt, daysAfter),
-      note: note ?? null,
+      note: tx(note),
     }));
     return { input, changes };
   });

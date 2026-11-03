@@ -1,6 +1,9 @@
+"use client";
+
 import Link from "next/link";
 import { BarList, FollowUpList, GroupTable, Panel, Stat, WeeklyChart } from "@/components/dashboard";
-import { STATUSES, STATUS_LABELS } from "@/lib/constants";
+import { useLang } from "@/i18n/LanguageProvider";
+import { STATUSES } from "@/lib/constants";
 import { formatDays, formatPercent } from "@/lib/format";
 import { IS_DEMO } from "@/lib/mode";
 import { computeStats, followUps } from "@/lib/stats";
@@ -16,18 +19,20 @@ export function DashboardView({
   history: StatusChange[];
   today: string;
 }) {
+  const { lang, t } = useLang();
+  const d = t.dashboard;
+
   if (applications.length === 0) {
     return (
       <div className="py-16 text-center">
-        <h1 className="text-2xl font-semibold">Aún no tienes solicitudes</h1>
+        <h1 className="text-2xl font-semibold">{d.emptyTitle}</h1>
         <p className="mx-auto mt-2 max-w-md text-slate-600">
           {IS_DEMO ? (
-            "Añade una solicitud o restablece los datos de ejemplo desde la barra superior."
+            d.emptyDemo
           ) : (
             <>
-              Añade tu primera solicitud, o carga datos de ejemplo con{" "}
-              <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm">npm run seed</code> para ver cómo queda
-              el panel.
+              {d.emptyBefore}{" "}
+              <code className="rounded bg-slate-100 px-1.5 py-0.5 text-sm">npm run seed</code> {d.emptyAfter}
             </>
           )}
         </p>
@@ -35,7 +40,7 @@ export function DashboardView({
           href="/applications/new"
           className="mt-6 inline-block rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-700"
         >
-          + Nueva solicitud
+          {d.newApplication}
         </Link>
       </div>
     );
@@ -46,41 +51,41 @@ export function DashboardView({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-semibold tracking-tight">Resumen</h1>
+      <h1 className="text-2xl font-semibold tracking-tight">{d.title}</h1>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-6">
+        <Stat label={d.sent} value={String(stats.sent)} hint={stats.pending ? d.pendingHint(stats.pending) : undefined} />
         <Stat
-          label="Enviadas"
-          value={String(stats.sent)}
-          hint={stats.pending ? `${stats.pending} pendientes de enviar` : undefined}
+          label={d.responseRate}
+          value={formatPercent(stats.responseRate, lang)}
+          hint={d.outOf(stats.responded, stats.sent)}
         />
-        <Stat label="Tasa de respuesta" value={formatPercent(stats.responseRate)} hint={`${stats.responded} de ${stats.sent}`} />
-        <Stat label="Entrevistas" value={String(stats.interviews)} hint={`${formatPercent(stats.interviewRate)} de las enviadas`} />
-        <Stat label="Ofertas" value={String(stats.offers)} />
-        <Stat label="Respuesta en" value={formatDays(stats.avgDaysToResponse)} hint="de media" />
         <Stat
-          label="Procesos activos"
-          value={String(stats.active)}
-          hint={`${stats.rejected} rechazadas · ${stats.ghosted} sin respuesta`}
+          label={d.interviews}
+          value={String(stats.interviews)}
+          hint={d.ofSent(formatPercent(stats.interviewRate, lang))}
         />
+        <Stat label={d.offers} value={String(stats.offers)} />
+        <Stat label={d.responseIn} value={formatDays(stats.avgDaysToResponse, lang)} hint={d.onAverage} />
+        <Stat label={d.active} value={String(stats.active)} hint={d.activeHint(stats.rejected, stats.ghosted)} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Panel title={`Requieren seguimiento (${pending.length})`}>
+        <Panel title={d.needFollowUp(pending.length)}>
           <FollowUpList items={pending} />
         </Panel>
-        <Panel title="Solicitudes enviadas por semana">
+        <Panel title={d.weekly}>
           <WeeklyChart weeks={stats.weekly} />
         </Panel>
-        <Panel title="Estado actual">
-          <BarList items={STATUSES.map((status) => ({ label: STATUS_LABELS[status], value: stats.byStatus[status] }))} />
+        <Panel title={d.currentStatus}>
+          <BarList items={STATUSES.map((status) => ({ label: t.statuses[status], value: stats.byStatus[status] }))} />
         </Panel>
         <div className="space-y-6">
-          <Panel title="Por modalidad">
-            <GroupTable title="Modalidad" groups={stats.byWorkMode} />
+          <Panel title={d.byWorkMode}>
+            <GroupTable title={d.workMode} groups={stats.byWorkMode} />
           </Panel>
-          <Panel title="Por fuente">
-            <GroupTable title="Fuente" groups={stats.bySource} />
+          <Panel title={d.bySource}>
+            <GroupTable title={d.source} groups={stats.bySource} />
           </Panel>
         </div>
       </div>

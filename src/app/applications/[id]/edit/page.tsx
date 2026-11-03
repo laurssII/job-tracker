@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { updateApplicationAction } from "@/app/actions";
 import { DemoEdit } from "@/components/demo/DemoPages";
-import { ApplicationForm } from "@/components/ApplicationForm";
+import { ApplicationForm, FormHeading } from "@/components/ApplicationForm";
 import { getApplication } from "@/lib/applications";
 import { applicationToValues } from "@/lib/form-values";
 import { IS_DEMO } from "@/lib/mode";
@@ -18,9 +18,7 @@ export default async function EditApplicationPage({ params }: { params: Promise<
 
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-6 text-2xl font-semibold tracking-tight">
-        Editar: {application.company} <span className="font-normal text-slate-500">· {application.role}</span>
-      </h1>
+      <FormHeading mode="edit" company={application.company} role={application.role} />
       <ApplicationForm
         mode="edit"
         action={updateApplicationAction.bind(null, application.id)}

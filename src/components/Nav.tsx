@@ -2,16 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Controls } from "@/components/Controls";
+import { useLang } from "@/i18n/LanguageProvider";
 import { IS_DEMO } from "@/lib/mode";
-
-const LINKS = [
-  { href: "/", label: "Resumen" },
-  { href: "/applications", label: "Solicitudes" },
-  { href: "/board", label: "Tablero" },
-];
 
 export function Nav() {
   const pathname = usePathname();
+  const { lang, t } = useLang();
+  const links = [
+    { href: "/", label: t.nav.summary },
+    { href: "/applications", label: t.nav.applications },
+    { href: "/board", label: t.nav.board },
+  ];
   const isActive = (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 
   return (
@@ -20,8 +22,8 @@ export function Nav() {
         <Link href="/" className="font-semibold tracking-tight">
           Job Tracker
         </Link>
-        <nav className="flex gap-1 text-sm">
-          {LINKS.map((link) => (
+        <nav aria-label={t.nav.mainNav} className="flex gap-1 text-sm">
+          {links.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -35,7 +37,7 @@ export function Nav() {
             </Link>
           ))}
         </nav>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
           {IS_DEMO ? (
             // En la demo no hay servidor con los datos: el CSV se genera en el navegador.
             <button
@@ -45,26 +47,27 @@ export function Nav() {
                   import("@/lib/local-store"),
                   import("@/lib/download"),
                 ]);
-                downloadCsv(listApplications());
+                downloadCsv(listApplications(), lang);
               }}
-              className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             >
-              Exportar CSV
+              {t.nav.exportCsv}
             </button>
           ) : (
             <a
               href="/api/export"
-              className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+              className="whitespace-nowrap rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
             >
-              Exportar CSV
+              {t.nav.exportCsv}
             </a>
           )}
           <Link
             href="/applications/new"
-            className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
+            className="whitespace-nowrap rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"
           >
-            + Nueva solicitud
+            {t.nav.newApplication}
           </Link>
+          <Controls />
         </div>
       </div>
     </header>

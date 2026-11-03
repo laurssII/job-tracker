@@ -8,7 +8,7 @@
 ![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-4-06B6D4?logo=tailwindcss&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-003B57?logo=sqlite&logoColor=white)
 
-**[▶ Probar la demo](https://TU-PROYECTO.vercel.app)** — sin registro: los datos son ficticios y se guardan solo en tu navegador.
+**[▶ Probar la demo](https://job-tracker-demo-lcm.vercel.app/)** — sin registro: los datos son ficticios y se guardan solo en tu navegador.
 
 <p align="center">
   <img src="docs/screenshots/dashboard.png" alt="Panel de resumen con estadísticas, seguimientos pendientes y gráficos" width="900">
@@ -28,7 +28,9 @@ Está pensada para el uso diario en una búsqueda de empleo real: los datos vive
 - **Lista con búsqueda y filtros** por estado, modalidad y fuente, con varios órdenes.
 - **Ficha de cada solicitud**: empresa, rol, modalidad, ubicación, contrato, salario, fuente, contacto, versión de CV enviada, notas, próxima acción y enlace a la oferta.
 - **Historial de estados**: línea de tiempo con fecha y nota de cada cambio.
-- **Exportación a CSV** (respeta los filtros activos), lista para abrir en Excel.
+- **Exportación a CSV** (respeta los filtros activos), lista para abrir en Excel. Las cabeceras salen en el idioma elegido.
+- **Español e inglés**: selector de idioma (ES / EN) en la barra superior. Traduce toda la interfaz, las fechas, los números y los errores de los formularios. La primera vez usa el idioma del navegador y se recuerda en una cookie.
+- **Modo claro y oscuro**: botón sol/luna junto al selector de idioma. Sigue el tema del sistema hasta que eliges uno, y se recuerda sin parpadeo al recargar.
 
 Estados: pendiente de enviar · enviada · respondida · entrevista · prueba técnica · oferta · rechazada · sin respuesta · retirada.
 
@@ -42,6 +44,11 @@ Estados: pendiente de enviar · enviada · respondida · entrevista · prueba t�
 | Lista con filtros | Ficha con historial |
 | :---: | :---: |
 | <img src="docs/screenshots/list.png" alt="Lista de solicitudes con búsqueda y filtros" width="440"> | <img src="docs/screenshots/detail.png" alt="Ficha de una solicitud con su historial de estados" width="440"> |
+
+<p align="center">
+  <img src="docs/screenshots/dashboard-dark.png" alt="Panel de resumen en modo oscuro" width="900"><br>
+  <em>Panel de resumen en modo oscuro. El idioma (ES / EN) y el tema se cambian desde la barra superior.</em>
+</p>
 
 > Las capturas muestran los datos de ejemplo del proyecto: empresas, personas y enlaces son todos ficticios.
 
@@ -87,6 +94,8 @@ Así la demo pública se puede desplegar sin base de datos, cada visitante tiene
 - Arrastrar y soltar con la API nativa del navegador, sin librerías; en pantallas pequeñas y con teclado hay un selector en cada tarjeta como alternativa.
 - Gráficos hechos con HTML y CSS, sin librería de gráficos. Las únicas dependencias de ejecución son Next, React y `better-sqlite3`.
 
+**Idioma y tema.** El idioma vive en una cookie (`lang`), no en `localStorage`: así el servidor lee la preferencia y la primera pantalla ya llega en el idioma correcto, sin parpadeo ni diferencias al hidratar. Si no hay cookie, usa el idioma del navegador (`Accept-Language`). Todos los textos están en `src/i18n/dictionaries.ts`, tipados para que TypeScript avise si falta una traducción. El modo oscuro invierte la escala de colores de Tailwind mediante variables CSS en `globals.css`, en lugar de añadir una variante `dark:` a cada clase, y un pequeño script en el `<head>` aplica el tema guardado antes de pintar.
+
 ## Stack
 
 | Capa | Tecnología |
@@ -118,6 +127,7 @@ Si `npm install` no puede obtener o compilar `better-sqlite3` (módulo nativo), 
 | `npm run build` · `npm start` | Compilar y servir en producción |
 | `npm run seed` | Carga los datos de ejemplo (solo si la base de datos está vacía) |
 | `npm run seed -- --reset` | **Borra todo** y vuelve a cargar los ejemplos |
+| `npm run seed -- --lang=en` | Carga los ejemplos en inglés (por defecto, en español) |
 | `npm run dev:demo` · `build:demo` · `start:demo` | Lo mismo en **modo demo** |
 | `npm test` | Pruebas unitarias |
 | `npm run typecheck` | Comprobación de tipos |
@@ -151,7 +161,9 @@ src/
     stats.ts        estadísticas y seguimiento
     validation.ts   validación de formularios y filtros
     csv.ts · dates.ts · format.ts · constants.ts · types.ts
-    seed-data.ts    datos de ejemplo ficticios
+    seed-data.ts    datos de ejemplo ficticios (en español e inglés)
+  i18n/             idioma: diccionarios es/en, cookie y proveedor de React
+  theme/            modo claro/oscuro: script previo al pintado y hook
 scripts/seed.ts     carga de datos de ejemplo
 tests/              pruebas (el contrato de datos se ejecuta contra las dos capas)
 docs/screenshots/   capturas de pantalla de este README
@@ -168,4 +180,5 @@ docs/screenshots/   capturas de pantalla de este README
 
 - **Un solo usuario, sin autenticación.** En modo normal está pensada para ejecutarse en tu propio equipo: cualquiera que llegue al servidor puede ver y modificar todo. Para alojar el modo normal en internet haría falta añadir autenticación y migrar los datos a Postgres.
 - **La demo no comparte datos entre dispositivos**: viven en el navegador de cada visitante, y se pierden si borra los datos del sitio.
+- **Lo que escribes no se traduce.** Al cambiar de idioma se traduce la interfaz, no tus empresas, roles ni notas. En la demo, los datos de ejemplo sin tocar sí se regeneran en el idioma elegido; en cuanto el visitante cambia algo, se respetan tal cual.
 - Ideas pendientes: importar solicitudes desde CSV, copias de seguridad automáticas, recordatorios por correo y extraer los datos de una oferta a partir de su enlace.

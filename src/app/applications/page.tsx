@@ -1,10 +1,7 @@
 import { DemoApplications } from "@/components/demo/DemoPages";
-import {
-  ApplicationsListView,
-  exportLabel,
-  filtersToQuery,
-} from "@/components/views/ApplicationsListView";
+import { ApplicationsListView } from "@/components/views/ApplicationsListView";
 import { listApplications, listSources } from "@/lib/applications";
+import { filtersToQuery } from "@/lib/filters";
 import { IS_DEMO } from "@/lib/mode";
 import { parseFilters } from "@/lib/validation";
 
@@ -22,14 +19,7 @@ export default async function ApplicationsPage({ searchParams }: { searchParams:
       applications={listApplications(filters)}
       sources={listSources()}
       filters={filters}
-      exportControl={
-        <a
-          href={`/api/export${query ? `?${query}` : ""}`}
-          className="text-sm text-slate-600 hover:text-slate-900"
-        >
-          {exportLabel(filters)}
-        </a>
-      }
+      exportHref={`/api/export${query ? `?${query}` : ""}`}
     />
   );
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { addDays, daysBetween, startOfWeek, todayISO } from "../src/lib/dates";
-import { computeStats, followUps } from "../src/lib/stats";
+import { NO_SOURCE, computeStats, followUps } from "../src/lib/stats";
 import { makeApp, makeChange } from "./helpers";
 
 const TODAY = "2026-10-31"; // sábado
@@ -61,7 +61,7 @@ test("estadísticas: por fuente y por modalidad", () => {
     [
       ["LinkedIn", 2, 1],
       ["InfoJobs", 1, 1],
-      ["Sin especificar", 1, 0],
+      [NO_SOURCE, 1, 0],
     ],
   );
   assert.deepEqual(
