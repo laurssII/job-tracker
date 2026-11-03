@@ -1,6 +1,6 @@
 # Job Tracker
 
-Aplicación web para llevar el seguimiento de las solicitudes de empleo: a qué empresa, rol, modalidad (presencial / híbrido / remoto), cuándo se envió, si han respondido y en qué punto está cada proceso. Todo se guarda en local, en un fichero SQLite.
+Aplicación web para llevar el seguimiento de las solicitudes de empleo: a qué empresa, rol, modalidad (presencial / híbrido / remoto), cuándo se envió, si han respondido y en qué punto está cada proceso. 
 
 **Stack:** Next.js 15 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · SQLite (`better-sqlite3`).
 
@@ -31,6 +31,7 @@ La base de datos se crea sola en `data/job-tracker.db` (está en `.gitignore`: c
 | --- | --- |
 | `npm run dev` | Servidor de desarrollo |
 | `npm run build` / `npm start` | Compilar y servir en modo producción |
+| `npm run dev:demo` / `build:demo` / `start:demo` | Lo mismo, pero en **modo demo** (datos ficticios en el navegador, sin base de datos) |
 | `npm run seed` | Carga datos de ejemplo (solo si la base de datos está vacía) |
 | `npm run seed -- --reset` | **Borra todo** y vuelve a cargar los ejemplos |
 | `npm test` | Pruebas unitarias |
@@ -43,9 +44,15 @@ Para usar otro fichero de base de datos (por ejemplo, uno solo para la demo): `D
 ```
 src/
   app/             páginas (App Router), acciones de servidor y ruta /api/export
-  components/      formulario, tablero Kanban, panel de estadísticas…
+  components/
+    views/         pantallas reutilizables (resumen, lista, detalle), usadas por los dos modos
+    demo/          envoltorios del modo demo (leen y escriben en el navegador)
+    …              formulario, tablero Kanban, panel de estadísticas
   lib/
-    applications.ts  ÚNICO sitio que habla con la base de datos (consultas SQL)
+    applications.ts  capa de datos del modo normal: consultas SQL (SQLite)
+    local-store.ts   capa de datos del modo demo: misma API sobre localStorage
+    repository.ts    contrato que cumplen las dos capas
+    mode.ts          IS_DEMO (variable NEXT_PUBLIC_DEMO)
     db.ts, schema.ts conexión SQLite y esquema
     stats.ts         estadísticas y seguimiento (funciones puras)
     validation.ts    validación de formularios y filtros (funciones puras)
@@ -67,21 +74,23 @@ Decisiones que conviene conocer:
 - Si una solicitud pendiente pasa a enviada, su fecha de solicitud pasa a ser la del envío.
 - `status` y `work_mode` se validan en la aplicación y no con `CHECK` de SQL, para poder añadir estados sin migrar.
 
-## Siguiente paso: la demo pública en Vercel
+## Modo demo y publicación en Vercel
 
-Esta versión es para uso local. Antes de publicarla hay que resolver:
+La misma aplicación tiene dos modos:
 
-1. **Base de datos**: Vercel no conserva ficheros entre ejecuciones, así que SQLite no sirve allí. Migra a Postgres (Neon o Supabase). Solo hay que reescribir `src/lib/applications.ts` y `src/lib/db.ts` manteniendo las mismas funciones; el resto de la app no toca SQL.
-2. **Datos de la demo**: la demo debe usar datos ficticios (`seed-data.ts` ya lo es) y no tus solicitudes reales. Opciones: datos en el navegador por visitante, o cuenta demo con reseteo periódico.
-3. **Acceso**: ahora mismo cualquiera que llegue a la app puede ver y modificar todo. Para tu uso real, añade autenticación; para la demo, aísla los datos por visitante.
-4. **Abusos**: limita el tamaño de lo que se puede guardar y, si añades funciones con IA, ponles un límite de uso.
+| | Modo normal (tu uso real) | Modo demo (portfolio) |
+| --- | --- | --- |
+| Datos | SQLite en `data/job-tracker.db`, vacío al empezar | `localStorage` del navegador de cada visitante |
+| Precarga | Ninguna (el seed es opcional) | 26 solicitudes ficticias la primera vez |
+| Servidor | Guarda y lee los datos | No guarda nada; las acciones del servidor están desactivadas |
+| Se activa con | por defecto | `NEXT_PUBLIC_DEMO=true` |
 
-## Estado de verificación
+En la demo cada visitante tiene su propia copia: lo que haga no lo ve nadie más, y un botón «Restablecer datos» en la barra superior la deja como al principio. La exportación a CSV se genera en el navegador.
 
-El código se escribió en un entorno sin acceso al registro de npm, así que **no se ha podido ejecutar `npm install` ni compilar la interfaz con Next.js**. Lo que sí se comprobó:
+Probarla en local: `npm run dev:demo`. Si cambias entre `dev` y `dev:demo`, borra antes la carpeta `.next` (el modo se fija al compilar).
 
-- Las 22 pruebas unitarias pasan (base de datos, estadísticas, CSV, validación, carga de datos de ejemplo), usando `node:sqlite` como sustituto de `better-sqlite3`, que ofrece la misma API para lo que usa la app.
-- La comprobación de tipos de TypeScript pasa con tipos simplificados de React y Next.
-- La carga de datos de ejemplo y la exportación CSV funcionan contra una base de datos temporal.
+## Verificación
 
-Lo que falta por confirmar en tu equipo: `npm install`, `npm run dev`, `npm run build` y el aspecto de las pantallas. Si algo falla en el primer arranque, lo más probable es un detalle de versiones o de la interfaz, y se corrige rápido con el mensaje de error.
+- 38 pruebas unitarias (`npm test`): base de datos, estadísticas, CSV, validación y carga de datos de ejemplo. Los mismos casos se ejecutan contra la capa SQLite y contra el almacén del navegador, para que los dos modos se comporten igual.
+- `npm run typecheck` y `npm run build` pasan en modo normal.
+- El modo demo (`dev:demo`, `build:demo`) hay que probarlo todavía en un navegador real: las pruebas cubren su lógica de datos, no las pantallas.

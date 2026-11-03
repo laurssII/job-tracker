@@ -4,3 +4,17 @@ html {
   font-family:
     ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
+
+/*
+ * Tablero: en pantallas anchas se sale del contenedor central de la página y ocupa casi todo el
+ * ancho de la ventana (hasta 1800 px). El margen de 3rem absorbe la barra de desplazamiento,
+ * así que no aparece desplazamiento horizontal.
+ */
+@media (min-width: 1280px) {
+  .board-wide {
+    position: relative;
+    left: 50%;
+    width: min(calc(100vw - 3rem), 1800px);
+    transform: translateX(-50%);
+  }
+}

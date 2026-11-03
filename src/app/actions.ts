@@ -10,6 +10,7 @@ import {
 } from "@/lib/applications";
 import { isStatus } from "@/lib/constants";
 import { todayISO } from "@/lib/dates";
+import { IS_DEMO } from "@/lib/mode";
 import {
   parseApplicationForm,
   parseStatusChangeForm,
@@ -20,7 +21,13 @@ function refreshAll() {
   revalidatePath("/", "layout");
 }
 
+/** En la demo los datos viven en el navegador: el servidor no debe guardar nada. */
+function assertServerMode() {
+  if (IS_DEMO) throw new Error("Las acciones del servidor están desactivadas en la demo.");
+}
+
 export async function createApplicationAction(_previous: FormState, formData: FormData): Promise<FormState> {
+  assertServerMode();
   const parsed = parseApplicationForm(formData);
   if (!parsed.ok) return { errors: parsed.errors, values: parsed.values };
 
@@ -34,6 +41,7 @@ export async function updateApplicationAction(
   _previous: FormState,
   formData: FormData,
 ): Promise<FormState> {
+  assertServerMode();
   const parsed = parseApplicationForm(formData);
   if (!parsed.ok) return { errors: parsed.errors, values: parsed.values };
 
@@ -46,6 +54,7 @@ export async function updateApplicationAction(
 
 /** Formulario de la página de detalle: cambia el estado con fecha y nota opcional. */
 export async function changeStatusAction(id: number, formData: FormData): Promise<void> {
+  assertServerMode();
   const parsed = parseStatusChangeForm(formData, todayISO());
   if (!parsed) return;
   changeStatus(id, parsed.status, parsed.date, parsed.note);
@@ -54,6 +63,7 @@ export async function changeStatusAction(id: number, formData: FormData): Promis
 
 /** Arrastrar una tarjeta en el tablero (o usar su selector). Devuelve si se aplicó el cambio. */
 export async function moveApplicationAction(id: number, status: string): Promise<{ ok: boolean }> {
+  assertServerMode();
   if (!Number.isInteger(id) || !isStatus(status)) return { ok: false };
   const ok = changeStatus(id, status, todayISO(), null);
   refreshAll();
@@ -61,6 +71,7 @@ export async function moveApplicationAction(id: number, status: string): Promise
 }
 
 export async function deleteApplicationAction(id: number): Promise<void> {
+  assertServerMode();
   deleteApplication(id);
   refreshAll();
   redirect("/applications");

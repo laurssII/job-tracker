@@ -1,11 +1,15 @@
 import { createApplicationAction } from "@/app/actions";
 import { ApplicationForm } from "@/components/ApplicationForm";
+import { DemoNew } from "@/components/demo/DemoPages";
 import { todayISO } from "@/lib/dates";
 import { newApplicationValues } from "@/lib/form-values";
+import { IS_DEMO } from "@/lib/mode";
 
 export const dynamic = "force-dynamic";
 
 export default function NewApplicationPage() {
+  if (IS_DEMO) return <DemoNew />;
+
   return (
     <div className="mx-auto max-w-3xl">
       <h1 className="mb-6 text-2xl font-semibold tracking-tight">Nueva solicitud</h1>

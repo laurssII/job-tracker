@@ -28,7 +28,7 @@ export function BarList({ items }: { items: { label: string; value: number }[] }
   return (
     <ul className="space-y-2">
       {items.map((item) => (
-        <li key={item.label} className="grid grid-cols-[8rem_1fr_2rem] items-center gap-2 text-sm">
+        <li key={item.label} className="grid grid-cols-[10rem_1fr_2rem] items-center gap-2 text-sm">
           <span className="truncate text-slate-600">{item.label}</span>
           <span className="h-2 rounded-full bg-slate-100">
             <span
@@ -79,7 +79,8 @@ export function GroupTable({ title, groups }: { title: string; groups: GroupStat
 export function WeeklyChart({ weeks }: { weeks: WeekCount[] }) {
   const max = Math.max(1, ...weeks.map((week) => week.count));
   return (
-    <div className="flex h-36 items-end gap-2">
+    // Las columnas ocupan todo el alto (sin items-end): así el alto en % de cada barra tiene una referencia.
+    <div className="flex h-36 gap-2">
       {weeks.map((week) => (
         <div key={week.weekStart} className="flex flex-1 flex-col items-center gap-1">
           <span className="text-xs tabular-nums text-slate-600">{week.count}</span>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { IS_DEMO } from "@/lib/mode";
 
 const LINKS = [
   { href: "/", label: "Resumen" },
@@ -35,12 +36,29 @@ export function Nav() {
           ))}
         </nav>
         <div className="ml-auto flex items-center gap-2">
-          <a
-            href="/api/export"
-            className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-          >
-            Exportar CSV
-          </a>
+          {IS_DEMO ? (
+            // En la demo no hay servidor con los datos: el CSV se genera en el navegador.
+            <button
+              type="button"
+              onClick={async () => {
+                const [{ listApplications }, { downloadCsv }] = await Promise.all([
+                  import("@/lib/local-store"),
+                  import("@/lib/download"),
+                ]);
+                downloadCsv(listApplications());
+              }}
+              className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            >
+              Exportar CSV
+            </button>
+          ) : (
+            <a
+              href="/api/export"
+              className="rounded-md px-3 py-1.5 text-sm text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            >
+              Exportar CSV
+            </a>
+          )}
           <Link
             href="/applications/new"
             className="rounded-md bg-slate-900 px-3 py-1.5 text-sm font-medium text-white hover:bg-slate-700"

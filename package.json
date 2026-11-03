@@ -7,6 +7,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
+    "dev:demo": "cross-env NEXT_PUBLIC_DEMO=true next dev",
+    "build:demo": "cross-env NEXT_PUBLIC_DEMO=true next build",
+    "start:demo": "cross-env NEXT_PUBLIC_DEMO=true next start",
     "seed": "tsx scripts/seed.ts",
     "test": "tsx --test tests/*.test.ts",
     "typecheck": "tsc --noEmit"
@@ -23,6 +26,7 @@
     "@types/node": "^22.0.0",
     "@types/react": "^19.1.0",
     "@types/react-dom": "^19.1.0",
+    "cross-env": "^7.0.3",
     "tailwindcss": "^4.1.0",
     "tsx": "^4.20.0",
     "typescript": "^5.9.0"
