@@ -64,6 +64,19 @@ describe("Almacén del navegador: persistencia y datos de ejemplo", () => {
     assert.equal(store.countApplications(), buildSeed(todayISO()).length);
   });
 
+  it("vaciar deja la demo vacía y sigue vacía al recargar; restablecer la recupera", () => {
+    store.deleteAllApplications();
+    assert.equal(store.countApplications(), 0);
+
+    store.__forgetMemoryForTests(); // como si se recargara la página
+    assert.equal(store.countApplications(), 0); // no se vuelven a cargar los ejemplos por su cuenta
+    assert.deepEqual(store.listAllHistory(), []);
+
+    store.resetDemo();
+    store.__forgetMemoryForTests();
+    assert.equal(store.countApplications(), buildSeed(todayISO()).length);
+  });
+
   it("si lo guardado está corrupto, vuelve a los datos de ejemplo", () => {
     storage.setItem(store.STORAGE_KEY_FOR_TESTS, "{esto no es json");
     store.__forgetMemoryForTests();

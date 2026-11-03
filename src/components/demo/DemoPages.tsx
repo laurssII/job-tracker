@@ -16,6 +16,7 @@ import { todayISO } from "@/lib/dates";
 import { downloadCsv } from "@/lib/download";
 import { applicationToValues, newApplicationValues } from "@/lib/form-values";
 import * as store from "@/lib/local-store";
+import { getNotice, showNotice, subscribeNotice } from "@/lib/notice";
 import type { ListFilters } from "@/lib/types";
 import {
   INITIAL_FORM_STATE,
@@ -48,7 +49,9 @@ function NotFoundMessage() {
   );
 }
 
+/** Barra superior de la demo. Solo lleva «Restablecer datos»; «Vaciar demo» está en el pie. */
 export function DemoBanner() {
+  const router = useRouter();
   return (
     <div className="border-b border-amber-200 bg-amber-50 px-4 py-2 text-center text-sm text-amber-900">
       <strong>Demo.</strong> Los datos son ficticios y se guardan solo en este navegador.{" "}
@@ -57,6 +60,8 @@ export function DemoBanner() {
         onClick={() => {
           if (window.confirm("¿Restablecer los datos de ejemplo? Se perderán los cambios que hayas hecho en la demo.")) {
             store.resetDemo();
+            showNotice("Datos de ejemplo restablecidos.");
+            router.push("/");
           }
         }}
         className="font-medium underline hover:no-underline"
@@ -64,6 +69,50 @@ export function DemoBanner() {
         Restablecer datos
       </button>
     </div>
+  );
+}
+
+/** Aviso flotante, abajo y centrado. El contenedor está siempre en la página para que los lectores de pantalla lo anuncien. */
+function DemoNotice() {
+  const message = useSyncExternalStore<string | null>(subscribeNotice, getNotice, () => null);
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      className="pointer-events-none fixed inset-x-0 bottom-6 z-50 flex justify-center px-4"
+    >
+      {message && <p className="rounded-md bg-slate-900 px-4 py-2 text-sm text-white shadow-lg">{message}</p>}
+    </div>
+  );
+}
+
+/** Pie de página de la demo: aquí vive «Vaciar demo», fuera de la barra superior para no sobrecargarla. */
+export function DemoFooter() {
+  const router = useRouter();
+  return (
+    <>
+      <footer className="border-t border-slate-200 px-4 py-6 text-center text-xs text-slate-500">
+        ¿Quieres probarla desde cero?{" "}
+        <button
+          type="button"
+          onClick={() => {
+            if (
+              window.confirm(
+                "¿Vaciar la demo? Se eliminarán todas las solicitudes, incluidas las de ejemplo. Podrás recuperarlas con «Restablecer datos».",
+              )
+            ) {
+              store.deleteAllApplications();
+              showNotice("Demo vaciada. Añade tu primera solicitud.");
+              router.push("/");
+            }
+          }}
+          className="font-medium text-slate-700 underline hover:no-underline"
+        >
+          Vaciar demo
+        </button>
+      </footer>
+      <DemoNotice />
+    </>
   );
 }
 
